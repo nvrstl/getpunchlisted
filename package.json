@@ -1,0 +1,9 @@
+{
+  "name": "punchlister-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Punchlister landing page + pilot application API.",
+  "engines": {
+    "node": ">=18"
+  }
+}
