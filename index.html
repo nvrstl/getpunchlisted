@@ -501,65 +501,62 @@
     color: var(--accent);
   }
 
-  /* Photo evidence strip (tab 3) */
-  .evidence {
+  /* Vervolgstappen checklist (tab 3) */
+  .followup {
     margin-top: 18px;
+    padding: 14px 18px 16px;
+    background: var(--paper-warm);
+    border-radius: 8px;
+  }
+  .followup-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .followup-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-  }
-  .evidence-photos {
-    display: flex;
-    gap: 8px;
-  }
-  .evidence-photo {
-    width: 56px;
-    height: 56px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #c8b8ff, #ffabff);
-    position: relative;
-    overflow: hidden;
-    transform: scale(0.6);
+    gap: 12px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--ink);
     opacity: 0;
-    transition: transform 0.5s cubic-bezier(.34,1.56,.64,1), opacity 0.4s ease;
+    transform: translateY(4px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
   }
-  .evidence-photo.in {
-    opacity: 1;
-    transform: scale(1);
-  }
-  .evidence-photo:nth-child(2) {
-    background: linear-gradient(135deg, #b3aaf5, #b2f9eb);
-  }
-  .evidence-photo:nth-child(3) {
-    background: linear-gradient(135deg, #ffabff, #b3aaf5);
-  }
-  .evidence-photo::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
-    transform: translateX(-100%);
-    animation: shimmerSweep 2.4s ease-in-out infinite;
-  }
-  @keyframes shimmerSweep {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(120%); }
-  }
+  .followup-row.in { opacity: 1; transform: translateY(0); }
 
-  .measure-badge {
-    margin-left: auto;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(124, 109, 240, 0.10);
-    color: var(--accent);
+  .followup-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(26, 18, 64, 0.20);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: transparent;
+    background: transparent;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .followup-row.done .followup-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    transform: scale(1.05);
+  }
+  .followup-label { flex: 1; }
+  .followup-date {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    border: 1px solid rgba(124, 109, 240, 0.20);
-    opacity: 0;
-    transform: translateX(8px);
-    transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
-  .measure-badge.in { opacity: 1; transform: translateX(0); }
 
   .artifact-header {
     display: grid;
@@ -1699,9 +1696,14 @@
           'Foto\'s genomen ter dossiervorming',
           'Oorzaak vermoedelijk losgekomen sifon — verder onderzoek vereist'
         ],
-        evidence: {
-          photos: 3,
-          measure: '40 × 25 cm'
+        followup: {
+          title: 'Vervolgstappen — automatisch ingepland',
+          steps: [
+            { label: "Foto's bijgevoegd aan dossier", date: 'vandaag', done: true },
+            { label: 'Sifon nazicht door loodgieter', date: '08/05', done: false },
+            { label: 'Verzekeraar verwittigen',       date: '09/05', done: false },
+            { label: 'Definitief herstel inplannen',  date: 'wk. 21', done: false }
+          ]
         }
       }
     ];
@@ -1772,13 +1774,15 @@
         s += '</div></div>';
       } else if (ex.kind === 'evidence') {
         var lastStep3 = 7 + ex.items.length;
-        s += '<div class="evidence stream" data-step="' + lastStep3 + '" data-extra="evidence">';
-        s += '<div class="evidence-photos">';
-        for (var i = 0; i < ex.evidence.photos; i++) {
-          s += '<div class="evidence-photo"></div>';
-        }
-        s += '</div>';
-        s += '<div class="measure-badge">↔ ' + escape(ex.evidence.measure) + '</div>';
+        s += '<div class="followup stream" data-step="' + lastStep3 + '" data-extra="followup">';
+        s += '<div class="followup-title">' + escape(ex.followup.title) + '</div>';
+        ex.followup.steps.forEach(function (step, i) {
+          s += '<div class="followup-row" data-i="' + i + '"' + (step.done ? ' data-done="1"' : '') + '>';
+          s += '<span class="followup-check">✓</span>';
+          s += '<span class="followup-label">' + escape(step.label) + '</span>';
+          s += '<span class="followup-date">' + escape(step.date) + '</span>';
+          s += '</div>';
+        });
         s += '</div>';
       }
 
@@ -1807,7 +1811,7 @@
         var kind = extra.getAttribute('data-extra');
         if (kind === 'calc') later(function () { animateCalc(extra); }, startAt);
         if (kind === 'schedule') later(function () { animateSchedule(extra); }, startAt);
-        if (kind === 'evidence') later(function () { animateEvidence(extra); }, startAt);
+        if (kind === 'followup') later(function () { animateFollowup(extra); }, startAt);
       }
     }
 
@@ -1845,13 +1849,16 @@
       });
     }
 
-    function animateEvidence(root) {
-      var photos = root.querySelectorAll('.evidence-photo');
-      photos.forEach(function (p, i) {
-        later(function () { p.classList.add('in'); }, i * 140);
+    function animateFollowup(root) {
+      var rows = root.querySelectorAll('.followup-row');
+      rows.forEach(function (row, i) {
+        later(function () {
+          row.classList.add('in');
+          if (row.getAttribute('data-done') === '1') {
+            later(function () { row.classList.add('done'); }, 220);
+          }
+        }, i * 130);
       });
-      var badge = root.querySelector('.measure-badge');
-      if (badge) later(function () { badge.classList.add('in'); }, photos.length * 140 + 100);
     }
 
     function setMemo(state) {
